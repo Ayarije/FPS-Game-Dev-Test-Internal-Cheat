@@ -1,7 +1,7 @@
-#include "pch.h"
 #include "Globals.h"
 
 namespace Globals {
+    uintptr_t GWorldOffset = 0x4B80F70;
     UWorld* GWorld = nullptr;
 
     void Init() {

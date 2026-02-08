@@ -1,7 +1,8 @@
-#include "pch.h"
 #include "Hooks.h"
 #include "MinHook.h"
 #include <iostream>
+
+#include "Renderer.h"
 
 namespace Hooks {
 
@@ -20,11 +21,14 @@ namespace Hooks {
         MH_Initialize();
         uintptr_t gameBase = (uintptr_t)GetModuleHandle(NULL);
 
+        Renderer::Init();
 
         MH_EnableHook(MH_ALL_HOOKS);
     }
 
     void Shutdown() {
+        Renderer::Shutdown();
+
         MH_DisableHook(MH_ALL_HOOKS);
         MH_Uninitialize();
     }

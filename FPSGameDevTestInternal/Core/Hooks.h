@@ -4,6 +4,7 @@
 namespace Hooks {
     void Init();
     void Shutdown();
+    void CreateHook(void* target, void* detour, void** original);
 
     // --- Stockage des originaux ---
 
