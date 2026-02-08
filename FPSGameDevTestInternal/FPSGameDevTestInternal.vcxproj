@@ -283,6 +283,7 @@
     <ClInclude Include="Utils\Memory.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Globals.cpp" />
     <ClCompile Include="Core\Hooks.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="pch.cpp">
