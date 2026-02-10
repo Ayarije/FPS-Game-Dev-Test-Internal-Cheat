@@ -6,17 +6,20 @@
 #include "Core/Hooks.h"
 
 #include "Utils/Console.h"
+#include "Utils/Memory.h"
+
+#include "Modules/Weapons.h"
+#include "Modules/Self.h"
 
 #include "SDK/SDK/FPS.h"
 
 
 void CheatLoop() {
-    static bool lastMenuState = true;
-
     while (true) {
         if (GetAsyncKeyState(VK_END) & 1) { // Appuyez sur END pour quitter la boucle de triche
             break;
 		}
+        Console::ConsoleLoop();
 
         if (!Globals::GWorld || !Globals::GWorld->OwningGameInstance) {
 			Sleep(100); // Attendre un peu avant de vérifier à nouveau
@@ -32,51 +35,35 @@ void CheatLoop() {
 
         APlayerController* PC = LocalPlayer->PlayerController;
 
+        if (GetAsyncKeyState(VK_NUMPAD1) & 1) {
+            tests::ScanForCameraOffset(PC);
+        }
+        if (GetAsyncKeyState(VK_NUMPAD2) & 1) {
+            tests::AnalyzeLevelOffsets();
+        }
+
         APawn* MyPawn = PC->Pawn;
         if (!MyPawn) continue;
 
-        ABP_PlayerCharacter_C* MyCharacter = (ABP_PlayerCharacter_C*)MyPawn;
-
-        bool isDead;
-        MyCharacter->IsDead(isDead);
-        if (isDead) {
-            Sleep(100);
-            continue;
-        }
-
-        // GOD MODE
-        if (MyCharacter->HealthComponent && Renderer::bGodMode) {
-            if (MyCharacter->HealthComponent->HP < 150) {
-                MyCharacter->HealthComponent->HP = 150;
-            }
-        }
+        ABP_PlayerCharacter_C* MyCharacter = (ABP_PlayerCharacter_C*) MyPawn;
+        
+        __try {
+        if (!MyCharacter->HealthComponent) continue;
+        if (MyCharacter->HealthComponent->HP <= 0) continue;
 
         // INIFINITE AMMO
-        if (Renderer::bInfiniteAmmo) {
-            if (MyCharacter->PrimaryWeapon) MyCharacter->PrimaryWeapon->ActualAmmo = 999;
-            if (MyCharacter->SecondaryWeapon) MyCharacter->SecondaryWeapon->ActualAmmo = 999;
-        }
+        if (Renderer::bInfiniteAmmo) weapons::InfiniteAmmo(MyCharacter);
 
         // STABLE WEAPON
-        if (Renderer::bStableWeapon) {
-            if (MyCharacter->PrimaryWeapon) {
-                auto weapon = MyCharacter->PrimaryWeapon;
-                weapon->AimingSpread = 0.0f;
-                weapon->WeaponVerticalRecoilMax = 0.0f;
-                weapon->WeaponVerticalRecoilMin = 0.0f;
-                weapon->WeaponHorizontalRecoilMax = 0.0f;
-                weapon->WeaponHorizontalRecoilMin = 0.0f;
-            }
-            if (MyCharacter->SecondaryWeapon) {
-                auto weapon = MyCharacter->SecondaryWeapon;
-                weapon->AimingSpread = 0.0f;
-                weapon->WeaponVerticalRecoilMax = 0.0f;
-                weapon->WeaponVerticalRecoilMin = 0.0f;
-                weapon->WeaponHorizontalRecoilMax = 0.0f;
-                weapon->WeaponHorizontalRecoilMin = 0.0f;
-            }
-        }
+        if (Renderer::bStableWeapon) weapons::StableWeapon(MyCharacter);
 
+        // INSTA FIRE RATE
+        if (Renderer::bInstaFireRate) weapons::InstaFireRate(MyCharacter);
+
+        // SPEED
+        self::speedModifier(MyCharacter);
+
+        } __except (EXCEPTION_EXECUTE_HANDLER) {}
         Sleep(10);
 	}
 }

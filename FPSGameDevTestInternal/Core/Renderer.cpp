@@ -1,6 +1,4 @@
 #include "Renderer.h"
-#include "Hooks.h"
-#include <iostream>
 
 // Déclaration externe pour gérer les inputs ImGui
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -15,6 +13,8 @@ namespace Renderer {
     ID3D11RenderTargetView* mainRenderTargetView = nullptr;
     WNDPROC oWndProc = nullptr;
     HWND window = nullptr;
+    uint32_t screenWidth = 1920;
+    uint32_t screenHeight = 1080;
     bool bRenderThread = false;
     bool bInit = false; // Pour savoir si ImGui est prêt
     bool bShowMenu = true; // Pour afficher/cacher le menu (Touche INSERT)
@@ -24,6 +24,8 @@ namespace Renderer {
     bool bGodMode = false;
     bool bInfiniteAmmo = false;
     bool bStableWeapon = false;
+    float speedModifier = 1.0f;
+    bool bInstaFireRate = false;
 
     void ToggleMenuState(bool bIsVisible) {
         if (!Globals::GWorld || !Globals::GWorld->OwningGameInstance) return;
@@ -68,8 +70,6 @@ namespace Renderer {
             Renderer::bShowMenu = !Renderer::bShowMenu;
 
             ToggleMenuState(Renderer::bShowMenu);
-
-            std::cout << "[+] Showing menu: " << bShowMenu << std::endl;
             return 0; // On bloque la touche pour le jeu
         }
 
@@ -81,7 +81,7 @@ namespace Renderer {
             case WM_LBUTTONUP:
             case WM_RBUTTONDOWN:
             case WM_RBUTTONUP:
-            case WM_MOUSEMOVE: // Bloque la caméra du jeu si la souris bouge
+            case WM_MOUSEMOVE:
             case WM_KEYUP:
             case WM_KEYDOWN: // Bloque aussi les touches (Z,Q,S,D) si on écrit dans le menu
                 return 1; // On retourne 1 pour dire "Message traité, ne pas envoyer au jeu"
@@ -119,6 +119,9 @@ namespace Renderer {
                 // Important: Trouver la fenêtre du jeu pour les inputs
                 window = sd.OutputWindow;
 
+                screenWidth = sd.BufferDesc.Width;
+                screenHeight = sd.BufferDesc.Height;
+
                 // HOOK WNDPROC ICI ! (On remplace la fonction de gestion des messages de la fenêtre)
                 oWndProc = (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
@@ -139,23 +142,53 @@ namespace Renderer {
 
         // ESP
         if (bESP) {
-            // Appelle ta fonction DrawESP() ici !
-            // DrawESP();
+            visuals::DrawESP();
         }
 
         // MENU
         if (bShowMenu) {
-            ImGui::Begin("Internal Cheat - FPS Test", &bShowMenu);
-            ImGui::Text("Bienvenue dans le menu !");
+            // PSEUDOCODE / PLAN (en commentaires) :
+            // - Ouvrir une fenêtre ImGui si bShowMenu est true.
+            // - Utiliser le pattern recommandé : if (ImGui::Begin(...)) { ... } ImGui::End();
+            //   Ceci garantit qu'on appelle ImGui::End() même si la fenêtre est fermée par ImGui.
+            // - Pour les onglets, vérifier le retour d'ImGui::BeginTabBar() avant d'appeler EndTabBar().
+            // - Pour chaque onglet, utiliser if (ImGui::BeginTabItem(...)) { // contenu ; ImGui::EndTabItem(); }
+            //   afin d'éviter d'appeler EndTabItem() quand BeginTabItem() a retourné false.
+            // - Mettre à jour ImGui::GetIO().MouseDrawCursor en fonction de bShowMenu.
+            // - Garder le style et les contrôles existants (checkboxes, slider) et les variables liées.
+            // - Ajouter des séparateurs et une structure claire pour la lisibilité.
+
+            ImGui::Begin("Internal Cheat - FPS Test", &bShowMenu, ImGuiWindowFlags_NoCollapse);
             ImGui::Separator();
 
-            ImGui::Checkbox("Activer ESP", &bESP);
-            ImGui::Checkbox("God Mode", &bGodMode);
-            ImGui::Checkbox("Munitions Infinies", &bInfiniteAmmo);
-            ImGui::Checkbox("No Recoil/Spread", &bStableWeapon);
+            // Tab bar: vérifier si on peut l'ouvrir
+            if (ImGui::BeginTabBar("Categories")) {
+
+                // ---- Onglet Weapons ----
+                if (ImGui::BeginTabItem("Weapons")) {
+                    ImGui::Checkbox("Munitions Infinies", &bInfiniteAmmo);
+                    ImGui::Checkbox("No Recoil/Spread", &bStableWeapon);
+                    ImGui::Checkbox("Insta Fire Rate", &bInstaFireRate);
+                    ImGui::EndTabItem();
+                }
+
+                // ---- Onglet Self ----
+                if (ImGui::BeginTabItem("Self")) {
+                    ImGui::Checkbox("God Mode", &bGodMode);
+                    ImGui::SliderFloat("Speed Modifier", &speedModifier, 0.5f, 10.0f);
+                    ImGui::EndTabItem();
+                }
+
+                // ---- Onglet Visuals ----
+                if (ImGui::BeginTabItem("Visuals")) {
+                    ImGui::Checkbox("Activer ESP", &bESP);
+                    ImGui::EndTabItem();
+                }
+
+                ImGui::EndTabBar();
+            }
 
             ImGui::End();
-
             // Si le menu est ouvert, on affiche la souris
             ImGui::GetIO().MouseDrawCursor = true;
         }

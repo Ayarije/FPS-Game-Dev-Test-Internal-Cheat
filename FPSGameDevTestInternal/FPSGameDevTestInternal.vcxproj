@@ -142,8 +142,7 @@
     <ClInclude Include="Core\Globals.h" />
     <ClInclude Include="Core\Hooks.h" />
     <ClInclude Include="Core\Renderer.h" />
-    <ClInclude Include="ImGui\backends\imgui_impl_dx11.h" />
-    <ClInclude Include="ImGui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="Core\Structs.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
     <ClInclude Include="ImGui\backends\imgui_impl_dx11.h" />
@@ -152,6 +151,9 @@
     <ClInclude Include="ImGui\imstb_rectpack.h" />
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
+    <ClInclude Include="Modules\Self.h" />
+    <ClInclude Include="Modules\Visuals.h" />
+    <ClInclude Include="Modules\Weapons.h" />
     <ClInclude Include="SDK\SDK.h" />
     <ClInclude Include="SDK\SDK\ActorLayerUtilities.h" />
     <ClInclude Include="SDK\SDK\ActorSequence.h" />
@@ -294,20 +296,23 @@
     <ClInclude Include="Utils\Console.h" />
     <ClInclude Include="Utils\Math.h" />
     <ClInclude Include="Utils\Memory.h" />
+    <ClInclude Include="Utils\Names.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Globals.cpp" />
     <ClCompile Include="Core\Hooks.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="ImGui\backends\imgui_impl_dx11.cpp" />
-    <ClCompile Include="ImGui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
     <ClCompile Include="ImGui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="ImGui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="Modules\Self.cpp" />
+    <ClCompile Include="Modules\Visuals.cpp" />
+    <ClCompile Include="Modules\Weapons.cpp" />
+    <ClCompile Include="Utils\Memory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

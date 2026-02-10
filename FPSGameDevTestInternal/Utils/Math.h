@@ -1,13 +1,12 @@
+#pragma once
 #include "../SDK/SDK.h"
 #include <cmath>
 
 #define M_PI 3.14159265358979323846
 
-struct FVector2D { float X, Y; };
-
 namespace Math {
     // Convertit une rotation (Unreal Rotator) en vecteurs de direction
-    void GetAxes(FRotator R, FVector& X, FVector& Y, FVector& Z) {
+    inline void GetAxes(FRotator R, FVector& X, FVector& Y, FVector& Z) {
         // Formules mathématiques standards pour convertir Euler Angles -> Vecteurs Matrices
         // (Simplifié pour l'explication, implémentation standard UE4)
         float CP, SP, CY, SY, CR, SR;
@@ -24,7 +23,7 @@ namespace Math {
         Z.X = -(CR * SP * CY + SR * SY); Z.Y = CY * SR - CR * SP * SY; Z.Z = CR * CP;
     }
 
-    FVector2D WorldToScreen(FVector WorldLocation, FVector CameraLocation, FRotator CameraRotation, float FOV) {
+    inline FVector2D WorldToScreen(FVector WorldLocation, FVector CameraLocation, FRotator CameraRotation, float FOV, uint32_t width, uint32_t height) {
         FVector2D Screenlocation = { 0, 0 };
 
         // Récupérer les axes de la caméra
@@ -44,9 +43,8 @@ namespace Math {
         if (vTransformed[2] < 1.0f) vTransformed[2] = 1.0f;
 
         // Projection perspective (FOV)
-        // Note: Remplacez 1920/1080 par la résolution dynamique de votre fenêtre
-        float ScreenCenterX = 1920.0f / 2.0f;
-        float ScreenCenterY = 1080.0f / 2.0f;
+        float ScreenCenterX = width / 2.0f;
+        float ScreenCenterY = height / 2.0f;
 
         Screenlocation.X = ScreenCenterX + vTransformed[0] * (ScreenCenterX / tan(FOV * M_PI / 360.0f)) / vTransformed[2];
         Screenlocation.Y = ScreenCenterY - vTransformed[1] * (ScreenCenterX / tan(FOV * M_PI / 360.0f)) / vTransformed[2];

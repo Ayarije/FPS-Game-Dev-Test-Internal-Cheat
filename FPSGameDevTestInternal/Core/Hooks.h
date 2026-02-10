@@ -1,5 +1,23 @@
 #pragma once
 #include <Windows.h>
+#include <string>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cctype>
+#include "MinHook.h"
+
+#include "Renderer.h"
+#include "Structs.h"
+
+#include "../Modules/Self.h"
+
+#include "../Utils/Memory.h"
+
+#include "../SDK/SDK.h"
+
+#define VTABLE_INDEX_PROCESSEVENT 68
+typedef void(__fastcall* ProcessEvent_t)(UObject* pObject, UFunction* pFunction, void* pParams);
 
 namespace Hooks {
     void Init();
@@ -7,8 +25,8 @@ namespace Hooks {
     void CreateHook(void* target, void* detour, void** original);
 
     // --- Stockage des originaux ---
-
+    extern ProcessEvent_t oProcessEvent;
 
     // --- Les Fonctions hooked ---
-
+    void __fastcall hkProcessEvent(UObject* pObject, UFunction* pFunction, void* pParams);
 }
