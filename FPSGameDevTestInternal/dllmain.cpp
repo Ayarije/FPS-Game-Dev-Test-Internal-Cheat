@@ -76,6 +76,7 @@ DWORD WINAPI MainThread(LPVOID lpReserved) {
 
     std::cout << "[+] DLL Injectée avec succès" << std::endl;
 
+    addr::InitSignaturesSDK();
     Globals::Init();
     Hooks::Init();
 

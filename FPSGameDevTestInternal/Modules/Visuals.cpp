@@ -30,19 +30,41 @@ namespace visuals {
         if (Enemy->HealthComponent->HP <= 0.0f) return false;
 
         return true;
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-            std::cout << "  > [ERROR] Error in actor check: passing" << std::endl;
-            return false;
+        } __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
+    }
+
+    ImU32 GetBoxColor(AActor* Actor, APawn* MyPawn) {
+        __try {
+            APawn* TargetPawn = (APawn*)Actor;
+            if (IsBadReadPtr(TargetPawn, 8)) return visuals::COLOR_DEFAULT;
+            if (IsBadReadPtr(MyPawn, 8)) return visuals::COLOR_DEFAULT;
+
+            ABP_PlayerState_C* TargetState = (ABP_PlayerState_C*)TargetPawn->PlayerState;
+            ABP_PlayerState_C* SelfState = (ABP_PlayerState_C*)MyPawn->PlayerState;
+
+            if (!TargetState || IsBadReadPtr(TargetState, 8)) return visuals::COLOR_ENEMY; // Par défaut ennemi si pas de state
+            if (!SelfState || IsBadReadPtr(SelfState, 8)) return visuals::COLOR_ENEMY;     // Par défaut ennemi si JE n'ai pas de state
+
+            if (TargetState->Team == SelfState->Team) {
+                return visuals::COLOR_TEAM;
+            }
+            else {
+                return visuals::COLOR_ENEMY;
+            }
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            return visuals::COLOR_DEFAULT;
         }
     }
 
-    void RenderESPBox(AActor* Actor, APawn* MyPawn, FVector CamLoc, FRotator CamRot, float CamFOV, int Width, int Height) {
+    void RenderESPBox(AActor* Actor, APawn* MyPawn, FVector CamLoc, FRotator CamRot, float CamFOV, int Width, int Height, ImU32 BoxColor) {
         __try {
-        FVector Origin = Actor->K2_GetActorLocation();
+        ABP_PlayerCharacter_C* Enemy = (ABP_PlayerCharacter_C*)Actor;
+
+        FVector Origin = Actor->RootComponent->RelativeLocation;
         FVector Head = Origin; Head.Z += 90.0f;
         FVector Feet = Origin; Feet.Z -= 90.0f;
-        std::cout << "  > Actor Head: x=" << Head.X << " y=" << Head.Y << " z=" << Head.Z << std::endl;
-
+        
         // 5. World To Screen
         FVector2D Head2D = Math::WorldToScreen(Head, CamLoc, CamRot, CamFOV, Width, Height);
         FVector2D Feet2D = Math::WorldToScreen(Feet, CamLoc, CamRot, CamFOV, Width, Height);
@@ -56,24 +78,20 @@ namespace visuals {
         float X = Head2D.X - (WidthBox / 2.0f);
         float Y = Head2D.Y;
 
-        ImGui::GetBackgroundDrawList()->AddRect(ImVec2(X, Y), ImVec2(X + WidthBox, Y + HeightBox), visuals::COLOR_ENEMY, 0.0f, 0, 1.5f);
+        ImGui::GetBackgroundDrawList()->AddRect(ImVec2(X, Y), ImVec2(X + WidthBox, Y + HeightBox), BoxColor, 0.0f, 0, 1.5f);
 
         // Barre de vie
-        /*
         float HealthPct = Enemy->HealthComponent->HP / Enemy->HealthComponent->MaxHP;
         if (HealthPct > 1.0f) HealthPct = 1.0f;
         float BarHeight = HeightBox * HealthPct;
-        ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(X - 5, Y + HeightBox - BarHeight), ImVec2(X - 2, Y + HeightBox), IM_COL32(0, 255, 0, 255));
         ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(X - 5, Y), ImVec2(X - 2, Y + HeightBox), IM_COL32(0, 0, 0, 255));
-        */
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-            std::cout << "  > [ERROR] Render failed (probably Actor->K2_Get_Actor_Location)" << std::endl;
-        }
+        ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(X - 5, Y + HeightBox - BarHeight), ImVec2(X - 2, Y + HeightBox), IM_COL32(0, 255, 0, 255));
 
+        } __except (EXCEPTION_EXECUTE_HANDLER) {}
     }
 
     void DrawESP() {
-        // --- 1. SÉCURITÉ ET CONTEXTE ---
+        // --- SÉCURITÉ ET CONTEXTE ---
         if (!Globals::GWorld || !Globals::GWorld->PersistentLevel) return;
 
         UGameInstance* GI = Globals::GWorld->OwningGameInstance;
@@ -88,22 +106,18 @@ namespace visuals {
         // --- CAMERA ---
         FVector CamLoc; FRotator CamRot; float CamFOV = 90.0f;
 
-        // Ici on utilise __try localement JUSTE pour la caméra si besoin,
-        // mais idéalement on fait une lecture simple de pointeur
         if (MyPC->PlayerCameraManager) {
             if (IsBadReadPtr(MyPC->PlayerCameraManager, 8)) return;
-            uintptr_t PCM = (uintptr_t)MyPC->PlayerCameraManager;
-            CamLoc = *(FVector*)(PCM + 0xEA0);
-            CamRot = *(FRotator*)(PCM + 0xEA0 + 0xC);
-            CamFOV = *(float*)(PCM + 0xEA0 + 0x18);
+            FMinimalViewInfo POV = MyPC->PlayerCameraManager->ViewTarget.POV;
+            CamLoc = POV.Location;
+            CamRot = POV.Rotation;
+            CamFOV = POV.FOV;
         }
         else { return; }
 
         int width = Renderer::screenWidth;
         int height = Renderer::screenHeight;
         if (width <= 0 || height <= 0) return;
-
-        ImGui::GetForegroundDrawList()->AddText(ImVec2(50, 50), IM_COL32(255, 255, 0, 255), "ESP ACTIVE");
 
         // --- 2. BOUCLE ACTEURS ---
         ULevel* Level = Globals::GWorld->PersistentLevel;
@@ -112,8 +126,6 @@ namespace visuals {
         if (!ActorList || IsBadReadPtr(ActorList, 8)) return;
         if (!ActorList->Data || ActorList->Count <= 0 || ActorList->Count > 10000) return;
 
-        std::cout << "[DEBUG] Total Acteurs: " << ActorList->Count << std::endl;
-
         for (int i = 0; i < ActorList->Count; i++) {
             if (IsBadReadPtr(&(ActorList->Data[i]), 8)) continue;
             AActor* Actor = ActorList->Data[i];
@@ -121,22 +133,10 @@ namespace visuals {
             if (!Actor || IsBadReadPtr(Actor, 8)) continue;
             if (Actor == MyPawn) continue;
 
+            if (!CheckActorName(Actor) || !CheckEnemy(Actor)) continue;
 
-            if (!CheckActorName(Actor)) {
-                continue;
-            }
-
-            std::cout << "[DEBUG] Rendering actor " << i << std::endl;
-
-            if (!CheckEnemy(Actor)) {
-                std::cout << "  > [ERROR] Check failed" << std::endl;
-                continue;
-            }
-            else {
-                std::cout << "  > [DEBUG] Check succeded" << std::endl;
-            }
-
-            RenderESPBox(Actor, MyPawn, CamLoc, CamRot, CamFOV, width, height);
+            ImU32 BoxColor = GetBoxColor(Actor, MyPawn);
+            RenderESPBox(Actor, MyPawn, CamLoc, CamRot, CamFOV, width, height, BoxColor);
         }
     }
 }

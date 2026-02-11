@@ -14,6 +14,9 @@ bool containsCaseInsensitive(std::string haystack, std::string needle) {
 }
 
 namespace Hooks {
+    extern std::string eventFuncSearchLabel = "";
+    extern bool bSearchForEventFunc = false;
+
     // Helper pour rendre le code lisible
     void CreateHook(void* target, void* detour, void** original) {
         MH_STATUS status = MH_CreateHook(target, detour, original);
@@ -34,7 +37,7 @@ namespace Hooks {
             UFunction_Stub* func = (UFunction_Stub*)pFunction;
             std::string funcName = func->GetName();
             
-            if (funcName.find("Render") != std::string::npos) {
+            if (Hooks::bSearchForEventFunc && funcName.find(Hooks::eventFuncSearchLabel) != std::string::npos) {
                 //if (funcName.find("Canvas") == std::string::npos)
                 std::cout << "Hooked: " << funcName << std::endl;
             }
@@ -48,10 +51,8 @@ namespace Hooks {
         // Appel de l'original
         oProcessEvent(pObject, pFunction, pParams);
     }
-
-    void Init() {
-        MH_Initialize();
-
+    
+    void InitProcessEventHook() {
         uintptr_t processEventAddr;
 
         if (Globals::GWorld) {
@@ -76,7 +77,19 @@ namespace Hooks {
         std::cout << "[+] ProcessEvent trouve via VTable[" << VTABLE_INDEX_PROCESSEVENT << "] a : " << std::hex << processEventAddr << std::endl;
 
         MH_CreateHook((void*)processEventAddr, &hkProcessEvent, (void**)&oProcessEvent);
+    }
 
+    void Init() {
+        MH_Initialize();
+        
+        if (signatures::getPlayerViewPointPtr == 0x0) {
+            std::cout << "[!] Failed to hook GetPlayerViewPoint: Cannot find func ptr" << std::endl;
+        } else {
+            MH_CreateHook((void*)signatures::getControlRotationPtr, &weapons::hkGetPlayerViewPoint, (void**)&weapons::oGetPlayerViewPoint);
+            std::cout << "[+] Succesfuly hooked GetPlayerViewPoint at offset: " << std::hex << signatures::getPlayerViewPointPtr - Globals::gameBase << std::endl;
+        }
+
+        InitProcessEventHook();
         Renderer::Init();
 
         MH_EnableHook(MH_ALL_HOOKS);

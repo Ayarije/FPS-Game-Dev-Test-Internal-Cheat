@@ -39,4 +39,9 @@ namespace weapons {
         }
     }
 
+    GetPlayerViewPoint_t oGetPlayerViewPoint = nullptr;
+    void __fastcall hkGetPlayerViewPoint(AController* context, FVector* outLoc, FRotator* outRot) {
+        std::cout << "Hooked: GetPlayerViewPoint" << std::endl;
+        oGetPlayerViewPoint(context, outLoc, outRot);
+    }
 }

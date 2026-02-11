@@ -22,6 +22,7 @@ namespace visuals {
 
 	bool CheckActorName(AActor* Actor);
 	bool CheckEnemy(AActor* Actor);
+	ImU32 GetBoxColor(AActor* actor, APawn* MyPawn);
 	void RenderESPBox(AActor* Actor, APawn* MyPawn, FVector CamLoc, FRotator CamRot, float CamFOV, int Width, int Height);
 	void DrawESP();
 }

@@ -11,6 +11,7 @@
 #include "Structs.h"
 
 #include "../Modules/Self.h"
+#include "../Modules/Weapons.h"
 
 #include "../Utils/Memory.h"
 
@@ -24,9 +25,12 @@ namespace Hooks {
     void Shutdown();
     void CreateHook(void* target, void* detour, void** original);
 
-    // --- Stockage des originaux ---
-    extern ProcessEvent_t oProcessEvent;
+    // --- Variables de Debug ---
+    extern std::string eventFuncSearchLabel;
+    extern bool bSearchForEventFunc;
 
-    // --- Les Fonctions hooked ---
+    // --- Process Event Hook ---
+    extern ProcessEvent_t oProcessEvent;
     void __fastcall hkProcessEvent(UObject* pObject, UFunction* pFunction, void* pParams);
+    void InitProcessEventHook();
 }

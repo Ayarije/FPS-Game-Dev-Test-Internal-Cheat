@@ -56,6 +56,10 @@ namespace Renderer {
             PC->bEnableMouseOverEvents = false;
         }
     }
+    void GUIColorEdit(const char* label, ImU32& color) {
+        ImVec4 tmp = ImGui::ColorConvertU32ToFloat4(color);
+        if (ImGui::ColorEdit4(label, (float*)&tmp)) color = ImGui::ColorConvertFloat4ToU32(tmp);
+    }
 
     // =============================================================
     // WNDPROC : GESTION DES ENTRÉES (SOURIS / CLAVIER)
@@ -147,16 +151,6 @@ namespace Renderer {
 
         // MENU
         if (bShowMenu) {
-            // PSEUDOCODE / PLAN (en commentaires) :
-            // - Ouvrir une fenêtre ImGui si bShowMenu est true.
-            // - Utiliser le pattern recommandé : if (ImGui::Begin(...)) { ... } ImGui::End();
-            //   Ceci garantit qu'on appelle ImGui::End() même si la fenêtre est fermée par ImGui.
-            // - Pour les onglets, vérifier le retour d'ImGui::BeginTabBar() avant d'appeler EndTabBar().
-            // - Pour chaque onglet, utiliser if (ImGui::BeginTabItem(...)) { // contenu ; ImGui::EndTabItem(); }
-            //   afin d'éviter d'appeler EndTabItem() quand BeginTabItem() a retourné false.
-            // - Mettre à jour ImGui::GetIO().MouseDrawCursor en fonction de bShowMenu.
-            // - Garder le style et les contrôles existants (checkboxes, slider) et les variables liées.
-            // - Ajouter des séparateurs et une structure claire pour la lisibilité.
 
             ImGui::Begin("Internal Cheat - FPS Test", &bShowMenu, ImGuiWindowFlags_NoCollapse);
             ImGui::Separator();
@@ -182,6 +176,20 @@ namespace Renderer {
                 // ---- Onglet Visuals ----
                 if (ImGui::BeginTabItem("Visuals")) {
                     ImGui::Checkbox("Activer ESP", &bESP);
+                    ImGui::EndTabItem();
+                }
+
+                // ---- Onglet Settings ----
+                if (ImGui::BeginTabItem("Settings")) {
+                    ImGui::SeparatorText("ESP Colors");
+                    GUIColorEdit("Default", visuals::COLOR_DEFAULT);
+                    GUIColorEdit("Enemy", visuals::COLOR_ENEMY);
+                    GUIColorEdit("Team", visuals::COLOR_TEAM);
+
+                    ImGui::SeparatorText("Debug");
+                    ImGui::Checkbox("Search for event func", &Hooks::bSearchForEventFunc);
+                    ImGui::InputText("EventSearchLabel", &Hooks::eventFuncSearchLabel);
+
                     ImGui::EndTabItem();
                 }
 

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "../ImGui/imgui.h"
+#include "../ImGui/imgui_stdlib.h"
 #include "../ImGui/backends/imgui_impl_win32.h"
 #include "../ImGui/backends/imgui_impl_dx11.h"
 
@@ -31,6 +32,7 @@ namespace Renderer {
 	void Init();
 	void Shutdown();
 	void ToggleMenuState(bool bIsVisible);
+	void GUIColorEdit(const char* label, ImU32& color);
 
 	// Le "Détour" de la fonction Present
 	HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);

@@ -3,9 +3,10 @@
 namespace Globals {
     uintptr_t GWorldOffset = 0x4B80F70;
     UWorld* GWorld = nullptr;
+    uintptr_t gameBase = 0x0;
 
     void Init() {
-        uintptr_t gameBase = (uintptr_t)GetModuleHandle(NULL);
+        gameBase = (uintptr_t)GetModuleHandle(NULL);
 
         GWorld = *(UWorld**)(gameBase + GWorldOffset);
 

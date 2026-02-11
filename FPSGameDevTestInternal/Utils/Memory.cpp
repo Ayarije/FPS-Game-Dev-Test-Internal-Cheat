@@ -8,43 +8,78 @@ namespace addr {
         return true;
     }
 
-    uintptr_t FindPattern(char* signature) {
-        static auto pattern_to_byte = [](char* pattern) {
-            auto bytes = std::vector<int>{};
-            const char* start = pattern;
-            const char* end = pattern + strlen(pattern);
-            for (const char* current = start; current < end; ++current) {
-                if (*current == '?') {
-                    ++current;
-                    if (*current == '?') ++current;
-                    bytes.push_back(-1);
-                }
-                else {
-                    bytes.push_back(strtoul(current, &pattern, 16));
-                }
+    ModuleInfo GetModuleInfo() {
+        static ModuleInfo info = { 0, 0 };
+        if (info.Base == 0) {
+            info.Base = (uint8_t*)GetModuleHandle(NULL);
+            PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)info.Base;
+            PIMAGE_NT_HEADERS nt = (PIMAGE_NT_HEADERS)(info.Base + dos->e_lfanew);
+            info.Size = nt->OptionalHeader.SizeOfImage;
+        }
+        return info;
+    }
+
+    uintptr_t FindPattern(const char* signature) {
+        // 1. Récupération rapide des infos module (Cached)
+        const auto info = GetModuleInfo();
+        uint8_t* start = info.Base;
+        size_t size = info.Size;
+        const uint8_t* end = start + size;
+
+        // 2. Parsing du pattern "IDA Style" vers des tableaux fixes
+        // On évite std::vector pour la performance, on utilise des vecteurs locaux
+        // La taille max d'une signature dépasse rarement 128 octets
+        uint8_t patternBytes[128];
+        uint8_t wildcardMask[128]; // 1 si octet valide, 0 si wildcard (?)
+        size_t patternLength = 0;
+
+        for (const char* current = signature; *current; ++current) {
+            if (*current == ' ') continue; // Ignorer les espaces
+            if (*current == '?') {
+                wildcardMask[patternLength] = 0; // C'est un wildcard
+                patternBytes[patternLength] = 0;
+                patternLength++;
+                if (*(current + 1) == '?') current++; // Gérer "?? " comme "?"
             }
-            return bytes;
-            };
+            else {
+                wildcardMask[patternLength] = 1; // C'est un octet à vérifier
+                // Conversion Hex char -> int optimisée
+                char h = *current;
+                char l = *(current + 1);
 
-        auto dosHeader = (PIMAGE_DOS_HEADER)GetModuleHandle(NULL);
-        auto ntHeaders = (PIMAGE_NT_HEADERS)((uint8_t*)dosHeader + dosHeader->e_lfanew);
-        auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
-        auto patternBytes = pattern_to_byte(signature);
-        auto scanBytes = reinterpret_cast<uint8_t*>(dosHeader);
-        auto s = patternBytes.size();
-        auto d = patternBytes.data();
+                uint8_t high = (h >= '0' && h <= '9') ? (h - '0') : ((h & ~0x20) - 'A' + 10);
+                uint8_t low = (l >= '0' && l <= '9') ? (l - '0') : ((l & ~0x20) - 'A' + 10);
 
-        for (auto i = 0ul; i < sizeOfImage - s; ++i) {
+                patternBytes[patternLength] = (high << 4) | low;
+                patternLength++;
+                current++; // On a lu 2 caractères
+            }
+            if (patternLength >= 128) break; // Sécurité
+        }
+
+        // 3. Scan Mémoire Optimisé
+        // On boucle sur toute la mémoire du module
+        for (uint8_t* i = start; i < end - patternLength; ++i) {
             bool found = true;
-            for (auto j = 0ul; j < s; ++j) {
-                if (scanBytes[i + j] != d[j] && d[j] != -1) {
+            // Boucle interne de comparaison
+            for (size_t j = 0; j < patternLength; ++j) {
+                // Si ce n'est pas un wildcard ET que les octets ne correspondent pas
+                if (wildcardMask[j] && i[j] != patternBytes[j]) {
                     found = false;
                     break;
                 }
             }
-            if (found) return (uintptr_t)&scanBytes[i];
+            if (found) return (uintptr_t)i;
         }
+
         return 0;
+    }
+    
+    void InitSignaturesSDK() {
+        for (auto& it : signatures::Signatures) {
+            std::string sig = *it.first;
+            *it.second = FindPattern((char*) sig.c_str());
+        }
     }
 }
 

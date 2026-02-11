@@ -14,6 +14,7 @@
 #define SDK_UNDEFINED(__ssize__, __cnt__, ...) char undefined##__cnt__[__ssize__]; //
 #define __um(...) // x
 
+#include "Signatures.h"
 #include "SDK/BasicType.h"
 #include "SDK/CoreUObject.h"
 #include "SDK/AudioExtensions.h"

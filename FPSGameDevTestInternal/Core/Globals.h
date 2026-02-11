@@ -8,6 +8,8 @@ namespace Globals {
 	extern UINT_PTR GWorldOffset;
     extern UWorld* GWorld;
 
+    extern uintptr_t gameBase;
+
     // Initialise les pointeurs avec vos offsets
     void Init();
 }

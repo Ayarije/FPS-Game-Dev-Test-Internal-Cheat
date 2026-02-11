@@ -5,10 +5,19 @@
 
 #include "../Core/Globals.h"
 
+#include "../SDK/Signatures.h"
+
 namespace addr {
+    struct ModuleInfo {
+        uint8_t* Base;
+        size_t Size;
+    };
+
     bool IsValid(void* ptr);
 
-    uintptr_t FindPattern(char* signature);
+    ModuleInfo GetModuleInfo();
+    uintptr_t FindPattern(const char* signature);
+    void InitSignaturesSDK();
 }
 
 namespace tests {
