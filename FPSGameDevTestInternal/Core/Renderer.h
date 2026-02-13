@@ -45,6 +45,8 @@ namespace Renderer {
 	extern bool bInfiniteAmmo;
 	extern bool bStableWeapon;
 	extern bool bInstaFireRate;
+	extern bool bSilentAim;
+	extern float AimbotFOV;
 	
 	// SELF
 	extern bool bGodMode;

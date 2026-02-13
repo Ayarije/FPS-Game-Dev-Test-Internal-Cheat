@@ -26,6 +26,8 @@ namespace Renderer {
     bool bStableWeapon = false;
     float speedModifier = 1.0f;
     bool bInstaFireRate = false;
+    bool bSilentAim = false;
+    float AimbotFOV = 1.0f;
 
     void ToggleMenuState(bool bIsVisible) {
         if (!Globals::GWorld || !Globals::GWorld->OwningGameInstance) return;
@@ -163,6 +165,8 @@ namespace Renderer {
                     ImGui::Checkbox("Munitions Infinies", &bInfiniteAmmo);
                     ImGui::Checkbox("No Recoil/Spread", &bStableWeapon);
                     ImGui::Checkbox("Insta Fire Rate", &bInstaFireRate);
+                    ImGui::Checkbox("Silent Aim", &bSilentAim);
+                    ImGui::SliderFloat("Aimbot FOV", &AimbotFOV, 0.5f, 60.0f);
                     ImGui::EndTabItem();
                 }
 

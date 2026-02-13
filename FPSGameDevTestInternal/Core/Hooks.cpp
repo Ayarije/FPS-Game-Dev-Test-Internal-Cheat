@@ -19,6 +19,9 @@ namespace Hooks {
 
     // Helper pour rendre le code lisible
     void CreateHook(void* target, void* detour, void** original) {
+        if ((uintptr_t)target == 0x0) {
+            std::cout << "[!] Erreur Hook: Wrong target ptr" << std::endl;
+        }
         MH_STATUS status = MH_CreateHook(target, detour, original);
         if (status != MH_OK) {
             std::cout << "[!] Erreur Hook: " << MH_StatusToString(status) << std::endl;
@@ -82,12 +85,8 @@ namespace Hooks {
     void Init() {
         MH_Initialize();
         
-        if (signatures::getPlayerViewPointPtr == 0x0) {
-            std::cout << "[!] Failed to hook GetPlayerViewPoint: Cannot find func ptr" << std::endl;
-        } else {
-            MH_CreateHook((void*)signatures::getControlRotationPtr, &weapons::hkGetPlayerViewPoint, (void**)&weapons::oGetPlayerViewPoint);
-            std::cout << "[+] Succesfuly hooked GetPlayerViewPoint at offset: " << std::hex << signatures::getPlayerViewPointPtr - Globals::gameBase << std::endl;
-        }
+        CreateHook(signatures::getPlayerViewPointPtr, &weapons::hkGetPlayerViewPoint, (void**) &weapons::oGetPlayerViewPoint);
+        CreateHook(signatures::setShootingPtr, &weapons::hkSetShooting, (void**) &weapons::oSetShooting);
 
         InitProcessEventHook();
         Renderer::Init();

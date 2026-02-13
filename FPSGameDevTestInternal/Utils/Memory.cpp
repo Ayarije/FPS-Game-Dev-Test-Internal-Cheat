@@ -77,8 +77,8 @@ namespace addr {
     
     void InitSignaturesSDK() {
         for (auto& it : signatures::Signatures) {
-            std::string sig = *it.first;
-            *it.second = FindPattern((char*) sig.c_str());
+            std::string sig = it.first;
+            *it.second = (void*) FindPattern((char*) sig.c_str());
         }
     }
 }

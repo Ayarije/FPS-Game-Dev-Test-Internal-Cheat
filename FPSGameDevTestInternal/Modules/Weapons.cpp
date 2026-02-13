@@ -41,7 +41,12 @@ namespace weapons {
 
     GetPlayerViewPoint_t oGetPlayerViewPoint = nullptr;
     void __fastcall hkGetPlayerViewPoint(AController* context, FVector* outLoc, FRotator* outRot) {
-        std::cout << "Hooked: GetPlayerViewPoint" << std::endl;
         oGetPlayerViewPoint(context, outLoc, outRot);
+    }
+
+    extern SetShooting_t oSetShooting = nullptr;
+    void __fastcall hkSetShooting(ABP_PlayerCharacter_C* context, bool shooting) {
+        if (shooting) std::cout << "[+] Just shoot" << std::endl;
+        oSetShooting(context, shooting);
     }
 }
