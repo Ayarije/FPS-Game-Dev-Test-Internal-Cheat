@@ -23,7 +23,7 @@ typedef void(__fastcall* ProcessEvent_t)(UObject* pObject, UFunction* pFunction,
 namespace Hooks {
     void Init();
     void Shutdown();
-    void CreateHook(void* target, void* detour, void** original);
+    void CreateHook(void* target, void* detour, void** original, std::string label);
 
     // --- Variables de Debug ---
     extern std::string eventFuncSearchLabel;

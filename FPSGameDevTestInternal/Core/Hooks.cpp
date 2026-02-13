@@ -18,16 +18,16 @@ namespace Hooks {
     extern bool bSearchForEventFunc = false;
 
     // Helper pour rendre le code lisible
-    void CreateHook(void* target, void* detour, void** original) {
+    void CreateHook(void* target, void* detour, void** original, std::string label) {
         if ((uintptr_t)target == 0x0) {
-            std::cout << "[!] Erreur Hook: Wrong target ptr" << std::endl;
+            std::cout << "[!] Hook Error  : " << label << " at offset " << std::hex << (uintptr_t) target - Globals::gameBase << std::endl;
         }
         MH_STATUS status = MH_CreateHook(target, detour, original);
         if (status != MH_OK) {
-            std::cout << "[!] Erreur Hook: " << MH_StatusToString(status) << std::endl;
+            std::cout << "[!] Hook Error  : " << MH_StatusToString(status) << std::endl;
         }
         else {
-            std::cout << "[+] Hook créé avec succès." << std::endl;
+            std::cout << "[+] Hook Success: " << label << " at offset " << std::hex << (uintptr_t) target - Globals::gameBase << std::endl;
         }
     }
 
@@ -85,8 +85,8 @@ namespace Hooks {
     void Init() {
         MH_Initialize();
         
-        CreateHook(signatures::getPlayerViewPointPtr, &weapons::hkGetPlayerViewPoint, (void**) &weapons::oGetPlayerViewPoint);
-        CreateHook(signatures::setShootingPtr, &weapons::hkSetShooting, (void**) &weapons::oSetShooting);
+        CreateHook(signatures::getPlayerViewPointPtr, &weapons::hkGetPlayerViewPoint, (void**) &weapons::oGetPlayerViewPoint, "GetPlayerViewPoint");
+        CreateHook((void*)((uintptr_t)signatures::setShootingPtr + 0x0), &weapons::hkSetShooting, (void**)&weapons::oSetShooting, "SetShooting");
 
         InitProcessEventHook();
         Renderer::Init();

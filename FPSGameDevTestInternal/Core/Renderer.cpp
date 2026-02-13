@@ -264,10 +264,8 @@ namespace Renderer {
         UnregisterClass(wc.lpszClassName, wc.hInstance);
 
         // INSTALLER LE HOOK MINHOOK
-        Hooks::CreateHook((void*)presentAddr, &hkPresent, (void**)&oPresent);
+        Hooks::CreateHook((void*)presentAddr, &hkPresent, (void**)&oPresent, "Present");
         bRenderThread = true;
-
-        std::cout << "[+] Hook DX11 Present installe a: " << std::hex << presentAddr << std::endl;
     }
     
     void Shutdown() {
