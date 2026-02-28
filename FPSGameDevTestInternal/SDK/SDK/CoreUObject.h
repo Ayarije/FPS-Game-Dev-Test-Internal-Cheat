@@ -441,7 +441,15 @@ struct FRotator
 { 
 	float                                              Pitch;                                                      // 0x0000   (0x0004)  
 	float                                              Yaw;                                                        // 0x0004   (0x0004)  
-	float                                              Roll;                                                       // 0x0008   (0x0004)  
+	float                                              Roll;                                                       // 0x0008   (0x0004)
+
+	FRotator() : Pitch(0), Yaw(0), Roll(0) {}
+	FRotator(float p, float y, float r) : Pitch(p), Yaw(y), Roll(r) {}
+
+	// Helper to add rotators easily
+	FRotator operator+(const FRotator& other) const {
+		return FRotator(Pitch + other.Pitch, Yaw + other.Yaw, Roll + other.Roll);
+	}
 };
 
 /// Struct /Script/CoreUObject.Quat

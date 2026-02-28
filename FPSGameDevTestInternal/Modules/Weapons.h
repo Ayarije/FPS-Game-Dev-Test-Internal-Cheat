@@ -4,7 +4,6 @@
 #include "../Utils/Memory.h"
 
 typedef void(__fastcall* GetPlayerViewPoint_t)(AController*, FVector*, FRotator*);
-typedef void(__fastcall* SetShooting_t)(ABP_PlayerCharacter_C* p1, int64_t p2, void* p3);
 
 namespace weapons {
 
@@ -12,9 +11,10 @@ namespace weapons {
     void InfiniteAmmo(ABP_PlayerCharacter_C* self);
     void InstaFireRate(ABP_PlayerCharacter_C* self);
 
+    extern bool bIsShooting;
+
     extern GetPlayerViewPoint_t oGetPlayerViewPoint;
     void __fastcall hkGetPlayerViewPoint(AController* context, FVector* outLoc, FRotator* outRot);
 
-    extern SetShooting_t oSetShooting;
-    void __fastcall hkSetShooting(ABP_PlayerCharacter_C* p1, int64_t p2, void* p3);
+    void hkReceiveBeginPlay(UObject* pObject, UFunction* pFunction, void* pParams);
 }

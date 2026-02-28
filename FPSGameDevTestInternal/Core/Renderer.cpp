@@ -7,6 +7,58 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 typedef HRESULT(__stdcall* Present_t)(IDXGISwapChain*, UINT, UINT);
 Present_t oPresent = nullptr;
 
+namespace ImGuiExt {
+    bool KeyBind(const char* label, ImGuiKey* key)
+    {
+        bool value_changed = false;
+        static ImGuiID waiting_for_key_id = 0;
+        ImGui::PushID(label);
+        ImGuiID current_id = ImGui::GetID("keybind_button");
+        bool is_waiting = (waiting_for_key_id == current_id);
+        const char* key_name = ImGui::GetKeyName(*key);
+        if (!key_name)
+        {
+            key_name = "None";
+        }
+        const char* button_text = is_waiting ? "...Press any key..." : key_name;
+        if (ImGui::Button(button_text, ImVec2(120, 0)))
+        {
+            if (is_waiting)
+            {
+                waiting_for_key_id = 0;
+            }
+            else
+            {
+                waiting_for_key_id = current_id;
+            }
+        }
+        ImGui::SameLine();
+        ImGui::Text("%s", label);
+        if (is_waiting) {
+            for (int i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_NamedKey_END; ++i) {
+                ImGuiKey current_key = static_cast<ImGuiKey>(i);
+                if (current_key == ImGuiKey_MouseLeft) continue;
+                if (ImGui::IsKeyPressed(current_key))
+                {
+                    if (current_key == ImGuiKey_Escape)
+                    {
+                        waiting_for_key_id = 0;
+                    }
+                    else
+                    {
+                        *key = current_key;
+                        value_changed = true;
+                        waiting_for_key_id = 0;
+                    }
+                    break;
+                }
+            }
+        }
+        ImGui::PopID();
+        return value_changed;
+    }
+}
+
 namespace Renderer {
     ID3D11Device* pDevice = nullptr;
     ID3D11DeviceContext* pContext = nullptr;
@@ -191,8 +243,14 @@ namespace Renderer {
                     GUIColorEdit("Team", visuals::COLOR_TEAM);
 
                     ImGui::SeparatorText("Debug");
+                    ImGui::Checkbox("Search only once", &Hooks::bSearchOnce);
+                    if (ImGui::Button("Clear Func Set")) Hooks::funcAlreadySeen.clear();
                     ImGui::Checkbox("Search for event func", &Hooks::bSearchForEventFunc);
                     ImGui::InputText("EventSearchLabel", &Hooks::eventFuncSearchLabel);
+                    ImGui::Checkbox("Search When Key Pressed", &Hooks::bSearchWhenKeyClicked);
+                    ImGui::SliderInt("Key Delta Time", &Hooks::keyDeltaTime, 10, 5000);
+                    ImGuiExt::KeyBind("Key", &Hooks::key);
+                    
 
                     ImGui::EndTabItem();
                 }

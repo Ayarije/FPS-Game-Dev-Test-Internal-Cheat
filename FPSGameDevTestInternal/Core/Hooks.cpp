@@ -14,8 +14,13 @@ bool containsCaseInsensitive(std::string haystack, std::string needle) {
 }
 
 namespace Hooks {
-    extern std::string eventFuncSearchLabel = "";
-    extern bool bSearchForEventFunc = false;
+    bool bSearchForEventFunc = false;
+    bool bSearchOnce = false;
+    bool bSearchWhenKeyClicked = false;
+    int keyDeltaTime = 500;
+    std::string eventFuncSearchLabel = "";
+    std::unordered_set<std::string> funcAlreadySeen;
+    ImGuiKey key = ImGuiKey_Enter;
 
     // Helper pour rendre le code lisible
     void CreateHook(void* target, void* detour, void** original, std::string label) {
@@ -39,16 +44,23 @@ namespace Hooks {
         if (pObject && pFunction) {
             UFunction_Stub* func = (UFunction_Stub*)pFunction;
             std::string funcName = func->GetName();
-            
-            if (Hooks::bSearchForEventFunc && funcName.find(Hooks::eventFuncSearchLabel) != std::string::npos) {
-                //if (funcName.find("Canvas") == std::string::npos)
-                std::cout << "Hooked: " << funcName << std::endl;
-            }
-
             // TakeDamageHook
             if (funcName.find("ReceiveAnyDamage") != std::string::npos) {
                 self::hkReceiveAnyDamage(pObject, pFunction, pParams);
             }
+            // ReceiveBeginPlayHook (Detect Shooting)
+            if (funcName.find("ReceiveBeginPlay") != std::string::npos) {
+                weapons::hkReceiveBeginPlay(pObject, pFunction, pParams);
+            }
+            
+            // [ DEBUG ]
+            if (Hooks::bSearchForEventFunc && funcName.find(Hooks::eventFuncSearchLabel) != std::string::npos) {
+                if (!Hooks::bSearchOnce || !funcAlreadySeen.contains(funcName)) {
+                    if (Hooks::bSearchOnce && !funcAlreadySeen.contains(funcName)) funcAlreadySeen.insert(funcName);
+                    std::cout << "Hooked: " << funcName << std::endl;
+                }
+            }
+
         }
 
         // Appel de l'original
@@ -62,12 +74,9 @@ namespace Hooks {
             // La VTable est le premier élément de l'objet (offset 0x0)
             void** vtable = *(void***)Globals::GWorld;
 
-            // On récupère l'adresse de la fonction à l'index 68
             processEventAddr = (uintptr_t)vtable[VTABLE_INDEX_PROCESSEVENT];
         }
         else {
-            // Fallback si GWorld n'est pas encore là (peu probable si injecté en jeu)
-            // On peut essayer de scanner, ou juste logger une erreur
             std::cout << "[!] GWorld est null, impossible de trouver la VTable !" << std::endl;
             return;
         }
@@ -86,7 +95,7 @@ namespace Hooks {
         MH_Initialize();
         
         CreateHook(signatures::getPlayerViewPointPtr, &weapons::hkGetPlayerViewPoint, (void**) &weapons::oGetPlayerViewPoint, "GetPlayerViewPoint");
-        CreateHook((void*)((uintptr_t)signatures::setShootingPtr + 0x0), &weapons::hkSetShooting, (void**)&weapons::oSetShooting, "SetShooting");
+        // CreateHook((void*)((uintptr_t)signatures::setShootingPtr + 0x0), &weapons::hkSetShooting, (void**)&weapons::oSetShooting, "SetShooting");
 
         InitProcessEventHook();
         Renderer::Init();

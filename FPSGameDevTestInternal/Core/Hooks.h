@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <cctype>
+#include <unordered_set>
 #include "MinHook.h"
 
 #include "Renderer.h"
@@ -26,8 +27,14 @@ namespace Hooks {
     void CreateHook(void* target, void* detour, void** original, std::string label);
 
     // --- Variables de Debug ---
-    extern std::string eventFuncSearchLabel;
     extern bool bSearchForEventFunc;
+    extern bool bSearchOnce;
+    extern bool bSearchWhenKeyClicked;
+    extern int keyDeltaTime;
+    extern ImGuiKey key;
+    extern std::string eventFuncSearchLabel;
+
+    extern std::unordered_set<std::string> funcAlreadySeen;
 
     // --- Process Event Hook ---
     extern ProcessEvent_t oProcessEvent;

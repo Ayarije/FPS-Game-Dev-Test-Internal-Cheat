@@ -18,6 +18,10 @@
 
 struct IDXGISwapChain;
 
+namespace ImGuiExt {
+	bool KeyBind(const char* label, ImGuiKey* key);
+}
+
 namespace Renderer {
 	extern ID3D11Device* pDevice;
 	extern ID3D11DeviceContext* pContext;

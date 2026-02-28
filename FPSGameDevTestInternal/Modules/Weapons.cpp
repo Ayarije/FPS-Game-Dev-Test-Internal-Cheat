@@ -39,31 +39,20 @@ namespace weapons {
         }
     }
 
+    bool bIsShooting = false;
+
     GetPlayerViewPoint_t oGetPlayerViewPoint = nullptr;
     void __fastcall hkGetPlayerViewPoint(AController* context, FVector* outLoc, FRotator* outRot) {
         oGetPlayerViewPoint(context, outLoc, outRot);
+        if (bIsShooting) {
+            std::cout << "Shooting (from get player view point)" << std::endl;
+
+            bIsShooting = false;
+        }
     }
 
-    extern SetShooting_t oSetShooting = nullptr;
-    void __fastcall hkSetShooting(ABP_PlayerCharacter_C* context, int64_t p2, void* wierdFormatbShooting) {
-        UGameInstance* GameInstance = Globals::GWorld->OwningGameInstance;
-
-        if (GameInstance->LocalPlayers.Num() != 0 && GameInstance->LocalPlayers[0]) {
-
-            ULocalPlayer* LocalPlayer = GameInstance->LocalPlayers[0];
-            if (LocalPlayer->PlayerController) {
-
-                APlayerController* PC = LocalPlayer->PlayerController;
-                APawn* MyPawn = PC->Pawn;
-                if (MyPawn) {
-                    ABP_PlayerCharacter_C* MyCharacter = (ABP_PlayerCharacter_C*)MyPawn;
-                    if (MyCharacter == context) {
-                        std::cout << wierdFormatbShooting << std::endl;
-                    }
-                }
-            }
-
-        }
-        oSetShooting(context, p2, wierdFormatbShooting);
+    void hkReceiveBeginPlay(UObject* pObject, UFunction* pFunction, void* pParams) {
+        bIsShooting = true;
+        std::cout << "Shooting (from Receive begin play)" << std::endl;
     }
 }
